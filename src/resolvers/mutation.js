@@ -9,9 +9,9 @@ const {
 require('dotenv').config();
 
 const gravatar = require('../util/gravatar');
-const { use } = require("passport");
 
 module.exports = {
+    //Note
     newNote: async (parent,args, {models,user}) =>{
         if(!user){
             throw new AuthenticationError('You must be signed in to create a note');
@@ -56,6 +56,7 @@ module.exports = {
             }
         );
     },
+    //Users
     signUp: async (parent,{username,email,password},{models}) =>{
         email = email.trim().toLowerCase();
         const hashed = await bcrypt.hash(password,10);
@@ -88,5 +89,45 @@ module.exports = {
             throw new AuthenticationError('Error signing in');
         }
         return jwt.sign({id: user._id},process.env.JWT_SECRET);
-    }
+    },
+    //Favorite
+    toggleFavorite: async (parent,{id},{models,user})=>{
+        if(!user){
+            throw new AuthenticationError();
+        }
+        let noteCheck = await models.Note.findById(id);
+        const hasUser = noteCheck.favoritedBy.indexOf(user.id);
+        console.log(noteCheck);
+        if (hasUser>=0){
+            return await models.Note.findOneAndUpdate(
+                id,
+                {
+                    $pull: {
+                        favoritedBy: mongoose.Types.ObjectId(user.id)
+                    },
+                    $inc: {
+                        favoriteCount: -1
+                    }
+                },
+                {
+                    new: true
+                }
+            );
+        }else{
+            return await models.Note.findOneAndUpdate(
+                id,
+                {
+                    $push:{
+                        favoritedBy: mongoose.Types.ObjectId(user.id)
+                    },
+                    $inc: {
+                        favoriteCount: 1
+                    }
+                },
+                {
+                    new: true
+                }
+            );
+        }
+    },
 }

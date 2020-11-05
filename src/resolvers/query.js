@@ -1,12 +1,14 @@
 const { model } = require("../models/note");
 
 module.exports = {
+    //Notes
     notes: async (parent, args, {models}) => {
         return await models.Note.find();
     },
     note: async (parent,args, {models}) =>{
         return await models.Note.findById(args.id);
     },
+    //Users:
     user: async (parent,{username},{models})=>{
         return await models.User.findOne({username});
     },
